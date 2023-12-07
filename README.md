@@ -1,4 +1,6 @@
-# Bpod 2nd Generation Code Repository
+# Please change the folder name to Bpod_Gen2 once cloned 
+
+## Bpod 2nd Generation Code Repository 
 
 This repository includes:
 -MATLAB software for Bpod.
