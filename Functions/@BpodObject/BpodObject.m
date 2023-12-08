@@ -23,7 +23,6 @@ classdef BpodObject < handle
         MachineType % 1 = Bpod 0.5, 2 = Bpod 0.7+, 3 = 2.X, 4 = 2+
         FirmwareVersion % An integer specifying the firmware on the connected device
         SerialPort % ArCOM serial port object
-        AnalogSerialPort % On state machine r2+ or newer, this is a dedeicated USB serial port to handle analog data
         HW % Hardware description
         Modules % Connected UART serial module description
         ModuleUSB % Struct containing a field for each connected module, listing its paired USB port (i.e. ModuleUSB.ModuleName = 'COM3')
@@ -529,9 +528,6 @@ classdef BpodObject < handle
 
         function delete(obj) % Destructor
             obj.SerialPort = []; % Trigger the ArCOM port's destructor function (closes and releases port)
-            if obj.MachineType > 3 && obj.FirmwareVersion > 22
-                obj.AnalogSerialPort = [];
-            end
             stop(obj.Timers.PortRelayTimer);
             delete(obj.Timers.PortRelayTimer);
         end

@@ -107,7 +107,7 @@ function obj = InitializeGUI(obj)
         ButtonFont = 'DejaVu Sans Mono';
     end
     
-    for i = 1:6 %obj.HW.n.SerialChannels
+    for i = 1:obj.HW.n.SerialChannels
         % Set module names
         if i > 1
             if obj.Modules.Connected(i-1)

@@ -1,6 +1,10 @@
 function BpodErrorSound() 
-Err = load('BpodErrorSound.mat');
+if verLessThan('matlab', '8')
+    ErrorSound = wavread('BpodError.wav');
+else
+    ErrorSound = audioread('BpodError.wav');
+end
 try
-    sound(Err.BpodErrorSound, 44100);
+    sound(ErrorSound, 44100);
 catch
 end
