@@ -58,22 +58,22 @@ function obj = SetupHardware(obj)
                SMName = 'r2_Plus';
         end
         disp(['Bpod State Machine ' SMName ' connected on port ' obj.SerialPort.PortName])
-        if obj.FirmwareVersion ~= obj.CurrentFirmware.StateMachine 
-            if obj.FirmwareVersion < obj.CurrentFirmware.StateMachine
-                disp([char(13) 'ERROR: Old state machine firmware detected, v' num2str(obj.FirmwareVersion) '. ' char(13)...
-                    'Please update the state machine firmware to v' num2str(obj.CurrentFirmware.StateMachine) ', and try again.' char(13)...
-                    'Click <a href="matlab:UpdateBpodFirmware(''' obj.SerialPort.PortName ''');">here</a> to start the update tool, or run UpdateBpodFirmware().' char(13)...
-                    'If necessary, manual firmware update instructions are <a href="matlab:web(''https://sites.google.com/site/bpoddocumentation/firmware-update'',''-browser'')">here</a>.' char(13)]);
-                BpodErrorSound;
-                obj.SerialPort.write('Z');
-                obj.SerialPort = []; % Trigger the ArCOM port's destructor function (closes and releases port)
-                obj.GUIData.OldFirmwareFlag = 1; % Signal to the Bpod.m launch code that old firmware was detected
-                errordlg(['ERROR: Old state machine firmware detected.' char(10) 'See instructions in the MATLAB command window.']);
-                %error('Old firmware detected. See instructions above.');
-            else
-                error('The firmware on the Bpod state machine is newer than your Bpod software for MATLAB. Please update your MATLAB software from the Bpod repository and try again.')
-            end
-        end
+        % if obj.FirmwareVersion ~= obj.CurrentFirmware.StateMachine 
+        %     if obj.FirmwareVersion < obj.CurrentFirmware.StateMachine
+        %         disp([char(13) 'ERROR: Old state machine firmware detected, v' num2str(obj.FirmwareVersion) '. ' char(13)...
+        %             'Please update the state machine firmware to v' num2str(obj.CurrentFirmware.StateMachine) ', and try again.' char(13)...
+        %             'Click <a href="matlab:UpdateBpodFirmware(''' obj.SerialPort.PortName ''');">here</a> to start the update tool, or run UpdateBpodFirmware().' char(13)...
+        %             'If necessary, manual firmware update instructions are <a href="matlab:web(''https://sites.google.com/site/bpoddocumentation/firmware-update'',''-browser'')">here</a>.' char(13)]);
+        %         BpodErrorSound;
+        %         obj.SerialPort.write('Z');
+        %         obj.SerialPort = []; % Trigger the ArCOM port's destructor function (closes and releases port)
+        %         obj.GUIData.OldFirmwareFlag = 1; % Signal to the Bpod.m launch code that old firmware was detected
+        %         errordlg(['ERROR: Old state machine firmware detected.' char(10) 'See instructions in the MATLAB command window.']);
+        %         %error('Old firmware detected. See instructions above.');
+        %     else
+        %         error('The firmware on the Bpod state machine is newer than your Bpod software for MATLAB. Please update your MATLAB software from the Bpod repository and try again.')
+        %     end
+        % end
         % Request hardware description
         obj.SerialPort.write('H', 'uint8');
         obj.HW.n = struct; % Stores total numbers of different types of channels (e.g. 5 BNC input channels)
@@ -82,6 +82,11 @@ function obj = SetupHardware(obj)
         obj.HW.CycleFrequency = 1000000/double(obj.HW.CyclePeriod);
         obj.HW.ValveType = 'SPI';
         obj.HW.n.MaxSerialEvents = double(obj.SerialPort.read(1, 'uint8'));
+         if obj.FirmwareVersion > 22
+            obj.HW.n.MaxBytesPerSerialMsg = double(obj.SerialPort.read(1, 'uint8'));
+        else
+            obj.HW.n.MaxBytesPerSerialMsg = 3;
+        end
         obj.HW.n.GlobalTimers = double(obj.SerialPort.read(1, 'uint8'));
         obj.HW.n.GlobalCounters  = double(obj.SerialPort.read(1, 'uint8'));
         obj.HW.n.Conditions  = double(obj.SerialPort.read(1, 'uint8'));
@@ -146,6 +151,35 @@ function obj = SetupHardware(obj)
     obj.HW.ConditionStartposition = find(obj.HW.EventTypes == 'C', 1);
     obj.HW.StateTimerPosition = find(obj.HW.EventTypes == 'U');
     obj.HW.Pos = struct; % Positions of different channel types in hardware description vectors
+        obj.HW.CircuitRevision = struct;
+    obj.HW.CircuitRevision.StateMachine = NaN;
+    
+    % In firmware v23 or newer, determine circuit board revision and minor firmware version
+    if obj.FirmwareVersion > 22 
+        if obj.EmulatorMode == 1
+            obj.HW.CircuitRevision.StateMachine = 0;
+             obj.HW.minorFirmwareVersion = obj.CurrentFirmware.StateMachine_Minor;
+        else
+            obj.SerialPort.write('v', 'uint8');
+            SM_Revision = obj.SerialPort.read(1, 'uint8');
+            obj.HW.CircuitRevision.StateMachine = SM_Revision;
+            obj.SerialPort.write('f', 'uint8');
+            obj.HW.minorFirmwareVersion = obj.SerialPort.read(1, 'uint16');
+        end
+        if obj.FirmwareVersion == obj.CurrentFirmware.StateMachine
+            if obj.HW.minorFirmwareVersion ~= obj.CurrentFirmware.StateMachine_Minor
+                disp(' ')
+                disp(['**********************ALERT*************************' char(10)...
+                      'State machine firmware mismatch detected (minor version).' char(10)... 
+                      'The state machine reported version ' num2str(obj.FirmwareVersion) '.' num2str(obj.HW.minorFirmwareVersion) char(10)...
+                      'The MATLAB software expects version ' num2str(obj.FirmwareVersion) '.' num2str(obj.CurrentFirmware.StateMachine_Minor) char(10)...
+                      'This can happen when using the ''develop'' branch of Bpod_Gen2 or Bpod_StateMachine_Firmware.' char(10)...
+                      'Please note that LoadBpodFirmware will not work for minor releases - the firmware update must be loaded with Arduino.' char(10)...
+                      '****************************************************'])
+                disp(' ');
+            end
+        end
+    end
     obj.HardwareState.Key = 'D = digital B/W = BNC/Wire (digital), P = Port (digital in, PWM out), S = SPI (Valve array), U = UART, X = USB, V = Valve';
     obj.HardwareState.InputState = zeros(1,obj.HW.n.Inputs);
     obj.HardwareState.InputType = obj.HW.Inputs;
