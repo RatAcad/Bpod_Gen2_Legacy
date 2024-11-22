@@ -89,16 +89,7 @@ function obj = Connect2BpodSM(obj, portString, varargin)
                         obj.SerialPort.delete;
                     end
                 else
-                    % try handshake just in case Bpod was killed incorrectly
-                    obj.SerialPort.write('6', 'uint8');
-                    Reply = obj.SerialPort.read(1, 'uint8');
-                    if (Reply == '5') % If the Bpod state machine replied correctly
-                        Found = 1;
-                        thisPortIndex = iPort;
-                        obj.Status.SerialPortName = ThisPort;
-                    else
-                        obj.SerialPort.delete;
-                    end
+                    obj.SerialPort.delete;
                 end
             end
         end

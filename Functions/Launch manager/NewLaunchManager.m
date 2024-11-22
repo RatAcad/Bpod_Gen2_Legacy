@@ -702,12 +702,8 @@ BpodSystem.ProtocolSettings = eval(['SettingStruct.' FieldName]);
 BpodSystem.Data = struct;
 ProtocolFolderPath = fullfile(BpodSystem.Path.ProtocolFolder,ProtocolName);
 ProtocolPath = fullfile(BpodSystem.Path.ProtocolFolder,ProtocolName,[ProtocolName '.m']);
-addpath(ProtocolPath);
-
-if isfield(BpodSystem.GUIHandles, 'MainFig')
-    set(BpodSystem.GUIHandles.RunButton, 'cdata', BpodSystem.GUIData.PauseButton, 'TooltipString', 'Press to pause session');
-end
-
+addpath(ProtocolFolderPath);
+set(BpodSystem.GUIHandles.RunButton, 'cdata', BpodSystem.GUIData.PauseButton, 'TooltipString', 'Press to pause session');
 IsOnline = BpodSystem.check4Internet();
 if (IsOnline == 1) && (BpodSystem.SystemSettings.PhoneHome == 1)
     BpodSystem.BpodPhoneHome(1);
@@ -716,25 +712,9 @@ BpodSystem.Status.BeingUsed = 1;
 BpodSystem.ProtocolStartTime = now*100000;
 BpodSystem.resetSessionClock();
 close(BpodSystem.GUIHandles.LaunchManagerFig);
-
-try
-    disp(' ');
-    disp(['Starting ' ProtocolName]);
-    run(ProtocolPath);
-catch e
-    if strcmp(e.message, 'Reference to non-existent field ''States''.') || strcmp(e.message, 'Unrecognized field name "States".')
-        fprintf("Protocol ended manually.\n");
-    else
-        fprintf("An error occured while running the protocol: \n");
-        
-        for i = 1:length(e.stack)
-            fprintf("Function = %s on line = %d\n", e.stack(i).name, e.stack(i).line);
-        end
-
-        fprintf('%s; %s\n', e.identifier, e.message);
-        fprintf("")
-    end
-end
+disp(' ');
+disp(['Starting ' ProtocolName]);
+run(ProtocolPath);
 
 function OutputString = Spaces2Underscores(InputString)
 SpaceIndexes = InputString == ' ';
