@@ -44,21 +44,23 @@ function trialData = GatherTrialData(varargin)
 
     %%% add additional fields manually added BpodSystem.Data %%%
 
-    BpodDataFields = fieldnames(BpodSystem.Data);
-
-    for f = 1:numel(BpodDataFields)
-
-        if ~isfield(trialData, BpodDataFields{f})
-
-            if iscell(BpodDataFields{f})
-                trialData.(BpodDataFields{f}) = BpodSystem.Data.(BpodDataFields{f}){end};
-            else
-                trialData.(BpodDataFields{f}) = BpodSystem.Data.(BpodDataFields{f})(end);
-            end
-
-        end
-
-    end
+    % BpodDataFields = fieldnames(BpodSystem.Data);
+    % 
+    % for f = 1:numel(BpodDataFields)
+    % 
+    %     if ~isfield(trialData, BpodDataFields{f})
+    % 
+    %         if iscell(BpodDataFields{f})
+    %             trialData.(BpodDataFields{f}) = BpodSystem.Data.(BpodDataFields{f}){end};
+    %         elseif strcmpi(class(BpodSystem.Data.(BpodDataFields{f})), 'double')
+    %             trialData.(BpodDataFields{f}) = BpodSystem.Data.(BpodDataFields{f})(end);
+    %         else
+    %             trialData.(BpodDataFields{f}) = BpodSystem.Data.(BpodDataFields{f});
+    %         end
+    % 
+    %     end
+    % 
+    % end
 
     %%% add additional fields by name, value pair %%%
 

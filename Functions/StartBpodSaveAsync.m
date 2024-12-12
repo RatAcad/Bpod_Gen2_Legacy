@@ -27,6 +27,12 @@ function [pool, saverQueue, saver] = StartBpodSaveAsync(varargin)
         timeout = 60;
     end
 
+    if nargin > 1
+        daysplit = varargin{2};
+    else
+        daysplit = true;
+    end
+
     global BpodSystem
 
     pool = gcp('nocreate');
@@ -36,7 +42,7 @@ function [pool, saverQueue, saver] = StartBpodSaveAsync(varargin)
     end
 
     protocolQueue = parallel.pool.PollableDataQueue;
-    saver = parfeval(pool, @SaveBpodSessionDataAsync, 0, BpodSystem.Path.CurrentDataFile, BpodSystem.Data, protocolQueue);
+    saver = parfeval(pool, @SaveBpodSessionDataAsync, 0, BpodSystem.Path.CurrentDataFile, BpodSystem.Data, protocolQueue, daysplit);
     [saverQueue, ok] = poll(protocolQueue, timeout);
 
     if ~ok
